@@ -16,6 +16,7 @@
 #
 import webapp2
 import cgi
+import re
 
 # html boilerplate for the top of every page
 page_header = """
@@ -40,39 +41,44 @@ page_footer = """
 </body>
 </html>
 """
-
+USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
+def valid_username(username):
+	return USER_RE.match(username)
 
 class SignupForm(webapp2.RequestHandler):
 	"""requests coming in to '/'"""
 	def get(self):
 		signup_header = "<h1>Signup Form</h1>"
+		
 		form_name = """
 		<form action="/confirm" method="post">
 		<label>
 		    Name
-		    <input type="text" name="user_name" />
+		    <input type="text" name="username" />
 		</label>"""
 
 		#if we have an error make a <p> to display it
 		error = self.request.get("error")
 		error_element = "<p class='error'>" + error + "</p>" if error else ""
+		
 		form_password = """
-
 		<p><label>
 		    Password
 		    <input type="text" name="password" />
 		</label></p>
 		<p>
 		<label>Confirm Password
-		    <input type="text" name="password" />
+		    <input type="text" name="verify" />
 		</label></p>
 		"""
+		
 		form_email = """
 		<p><label>
 		    Email Address (optional)
 		    <input type="text" name="email" />
 		</label></p>
 		"""
+		
 		form_submit = """
 		<p><input type="submit" /></p>
 		</form>
@@ -88,16 +94,21 @@ class SignupForm(webapp2.RequestHandler):
 class ConfirmSubmission(webapp2.RequestHandler):
 	"""handles requests coming in to /confirm"""
 	def post(self):
-		user_name = self.request.get("user_name")
+		username = self.request.get("username")
 
-		if not user_name:
+		if not username:
 			# make a helpful error message
 			error = "Please enter a user name."
 			error_blank = cgi.escape(error, quote=True)
 			# redirect to homepage, and include error as a query parameter in the URL
 			self.redirect("/?error=" + error_blank)
 
-		confirmation_message = "Welcome, " + user_name + "!"
+		elif not valid_username(username):
+			error_invalid_username = "That is not a valid user name."
+			error = error_invalid_username
+			self.redirect("/?error" + error)
+
+		confirmation_message = "Welcome, " + username + "!"
 		confirmation = page_header + "<p>" + confirmation_message + "</p>" + page_footer
 		self.response.write(confirmation)
 
