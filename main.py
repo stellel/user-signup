@@ -41,80 +41,69 @@ page_footer = """
 </html>
 """
 
-form = """
-<form action="/confirm" method="post">
-    <h1>Signup Form</h1>
-    <br>
-    <label>Name
-        <input type="text" name="user-name">
-    </label>
-    <br>
-    <label>Password
-        <input type="text" name="password">
-    </label>
-    <br>
-        <label>Confirm Password
-        <input type="text" name="password">
-    </label>
-    <br>
-    <label>Email Address (optional)
-        <input type="text" name="email">
-    </label>
 
-    <br>
-    <br>
-
-    <input type="submit">
-</form>
-"""
 class SignupForm(webapp2.RequestHandler):
-    """requests coming in to '/'"""
-    def get(self):
+	"""requests coming in to '/'"""
+	def get(self):
+		signup_header = "<h1>Signup Form</h1>"
+		form_name = """
+		<form action="/confirm" method="post">
+		<label>
+		    Name
+		    <input type="text" name="user_name" />
+		</label>"""
 
-        form = """
-        <form action="/confirm" method="post">
-        <h1>Signup Form</h1>
-        <br>
-        <label>
-            Name
-            <input type="text" name="user-name">
-        </label>
-        <br>
-        <label>
-            Password
-            <input type="text" name="password">
-        </label>
-        <br>
-        <label>Confirm Password
-            <input type="text" name="password">
-        </label>
-        <br>
-        <label>
-            Email Address (optional)
-            <input type="text" name="email">
-        </label>
-        <br>
-        <br>
-            <input type="submit">
-        </form>
-        """
+		#if we have an error make a <p> to display it
+		error = self.request.get("error")
+		error_element = "<p class='error'>" + error + "</p>" if error else ""
+		form_password = """
 
-        page_content = form
-        self.response.write(page_content)
+		<p><label>
+		    Password
+		    <input type="text" name="password" />
+		</label></p>
+		<p>
+		<label>Confirm Password
+		    <input type="text" name="password" />
+		</label></p>
+		"""
+		form_email = """
+		<p><label>
+		    Email Address (optional)
+		    <input type="text" name="email" />
+		</label></p>
+		"""
+		form_submit = """
+		<p><input type="submit" /></p>
+		</form>
+		"""
+
+		
 
 
+		main_content = signup_header + form_name + error_element + form_password + form_email + form_submit
+		page_content = page_header + main_content + page_footer
+		self.response.write(page_content)
 
 class ConfirmSubmission(webapp2.RequestHandler):
 	"""handles requests coming in to /confirm"""
 	def post(self):
-		user_name = self.request.get("user-name")
+		user_name = self.request.get("user_name")
+
+		if not user_name:
+			# make a helpful error message
+			error = "Please enter a user name."
+			error_blank = cgi.escape(error, quote=True)
+			# redirect to homepage, and include error as a query parameter in the URL
+			self.redirect("/?error=" + error_blank)
+
 		confirmation_message = "Welcome, " + user_name + "!"
 		confirmation = page_header + "<p>" + confirmation_message + "</p>" + page_footer
 		self.response.write(confirmation)
-		
+
 
 
 app = webapp2.WSGIApplication([
-    ('/', SignupForm),
-    ('/confirm', ConfirmSubmission)
+	('/', SignupForm),
+	('/confirm', ConfirmSubmission)
 ], debug=True)
