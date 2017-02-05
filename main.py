@@ -45,6 +45,11 @@ USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 def valid_username(username):
 	return USER_RE.match(username)
 
+EMAIL_RE = re.compile(r"^[\S]+@[\S]+.[\S]+$")
+def valid_email(email):
+	return EMAIL_RE.match(email)
+
+
 class SignupForm(webapp2.RequestHandler):
 	"""requests coming in to '/'"""
 	def get(self):
@@ -71,6 +76,8 @@ class SignupForm(webapp2.RequestHandler):
 		    <input type="text" name="verify" />
 		</label></p>
 		"""
+		password_error = self.request.get("password_error")
+		password_error_element = "<p class='error'>" + password_error + "</p>" if password_error else ""
 		
 		form_email = """
 		<p><label>
@@ -78,16 +85,14 @@ class SignupForm(webapp2.RequestHandler):
 		    <input type="text" name="email" />
 		</label></p>
 		"""
+		email_error = "<p class='error'>" + self.request.get("email_error") + "</p>" if error else ""
 		
 		form_submit = """
 		<p><input type="submit" /></p>
 		</form>
 		"""
 
-		
-
-
-		main_content = signup_header + form_name + error_element + form_password + form_email + form_submit
+		main_content = signup_header + form_name + error_element + form_password + password_error_element + form_email + email_error + form_submit
 		page_content = page_header + main_content + page_footer
 		self.response.write(page_content)
 
@@ -95,6 +100,9 @@ class ConfirmSubmission(webapp2.RequestHandler):
 	"""handles requests coming in to /confirm"""
 	def post(self):
 		username = self.request.get("username")
+		password = self.request.get("password")
+		verify = self.request.get("verify")
+		email =  self.request.get("email")
 
 		if not username:
 			# make a helpful error message
@@ -104,14 +112,20 @@ class ConfirmSubmission(webapp2.RequestHandler):
 			self.redirect("/?error=" + error_blank)
 
 		elif not valid_username(username):
-			error_invalid_username = "That is not a valid user name."
-			error = error_invalid_username
-			self.redirect("/?error" + error)
+			error = "That is not a valid user name."
+			self.redirect("/?error=" + error)
+
+		elif password != verify:
+			password_error = "The passwords don't match."
+			self.redirect("/?error=" + password_error)
+
+		elif not valid_email(email):
+			email_error = "That is not a valid email address."
+			self.redirect("/?error=" + email_error)
 
 		confirmation_message = "Welcome, " + username + "!"
 		confirmation = page_header + "<p>" + confirmation_message + "</p>" + page_footer
 		self.response.write(confirmation)
-
 
 
 app = webapp2.WSGIApplication([
