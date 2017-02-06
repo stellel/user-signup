@@ -47,6 +47,9 @@ def valid_username(username):
 
 EMAIL_RE = re.compile(r"^[\S]+@[\S]+.[\S]+$")
 def valid_email(email):
+	if email == "":
+		return True
+
 	return EMAIL_RE.match(email)
 
 
